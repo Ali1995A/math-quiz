@@ -1,20 +1,18 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 
-// 题目生成器
+// 题目生成器 (保持不变)
 const generateQuestion = (diff: string) => {
   let max = 20;
   if (diff === 'normal') max = 100;
   if (diff === 'hard') max = 1000;
 
-  // 随机决定是加法还是减法 (0是加, 1是减)
   const isPlus = Math.random() > 0.5;
   let a = Math.floor(Math.random() * max);
   let b = Math.floor(Math.random() * max);
 
-  // 如果是减法，保证 a >= b，防止出现负数
   if (!isPlus && a < b) {
     [a, b] = [b, a];
   }
@@ -22,18 +20,15 @@ const generateQuestion = (diff: string) => {
   const correctAnswer = isPlus ? a + b : a - b;
   const operator = isPlus ? '+' : '-';
 
-  // 生成3个错误选项 (在正确答案附近随机波动)
   const options = new Set<number>();
   options.add(correctAnswer);
 
   while (options.size < 4) {
-    // 错误答案在正确答案的 +/- 10 范围内，且不能小于0
     let wrong = correctAnswer + Math.floor(Math.random() * 20) - 10;
     if (wrong < 0) wrong = 0;
     if (wrong !== correctAnswer) options.add(wrong);
   }
 
-  // 打乱选项顺序
   return {
     text: `${a} ${operator} ${b} = ?`,
     correct: correctAnswer,
@@ -41,12 +36,12 @@ const generateQuestion = (diff: string) => {
   };
 };
 
-export default function QuizPage() {
+// 【修改点1】把原来的主组件改名为 QuizContent，只负责逻辑，不负责导出
+function QuizContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const difficulty = searchParams.get('difficulty') || 'easy';
 
-  // 游戏状态
   const [questions, setQuestions] = useState<any[]>([]);
   const [currentQ, setCurrentQ] = useState(0);
   const [score, setScore] = useState(0);
@@ -54,7 +49,6 @@ export default function QuizPage() {
   const [gameOver, setGameOver] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // 1. 初始化：生成20个题目
   useEffect(() => {
     const qList = [];
     for (let i = 0; i < 20; i++) {
@@ -63,7 +57,6 @@ export default function QuizPage() {
     setQuestions(qList);
   }, [difficulty]);
 
-  // 2. 倒计时逻辑
   useEffect(() => {
     if (gameOver) return;
     if (questions.length === 0) return;
@@ -71,7 +64,7 @@ export default function QuizPage() {
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
-          handleNext(false); // 时间到，算错，自动下一题
+          handleNext(false);
           return 10;
         }
         return prev - 1;
@@ -81,7 +74,6 @@ export default function QuizPage() {
     return () => clearInterval(timer);
   }, [currentQ, gameOver, questions]);
 
-  // 处理答题
   const handleNext = (isCorrect: boolean) => {
     if (isCorrect) setScore((s) => s + 5);
 
@@ -89,14 +81,13 @@ export default function QuizPage() {
       finishGame(isCorrect ? score + 5 : score);
     } else {
       setCurrentQ((c) => c + 1);
-      setTimeLeft(10); // 重置时间
+      setTimeLeft(10);
     }
   };
 
-  // 游戏结束，自动提交分数
   const finishGame = async (finalScore: number) => {
     setGameOver(true);
-    setScore(finalScore); // 修正最后显示的分数
+    setScore(finalScore);
     
     const userStr = localStorage.getItem('currentUser');
     if (userStr) {
@@ -122,7 +113,6 @@ export default function QuizPage() {
 
   if (questions.length === 0) return <div className="text-center p-10">正在出题...</div>;
 
-  // 结算界面
   if (gameOver) {
     return (
       <div className="min-h-screen bg-yellow-300 flex flex-col items-center justify-center p-4">
@@ -145,12 +135,10 @@ export default function QuizPage() {
     );
   }
 
-  // 答题界面
   const currentQuestion = questions[currentQ];
 
   return (
     <div className="min-h-screen bg-blue-300 flex flex-col items-center justify-center p-4">
-      {/* 顶部进度条 */}
       <div className="w-full max-w-md bg-blue-500 rounded-full h-4 mb-6 overflow-hidden border-2 border-white">
         <div 
           className="bg-yellow-400 h-full transition-all duration-500"
@@ -159,7 +147,6 @@ export default function QuizPage() {
       </div>
 
       <div className="bg-white p-6 rounded-3xl shadow-2xl w-full max-w-md border-b-8 border-blue-200 relative">
-        {/* 分数和倒计时 */}
         <div className="flex justify-between items-center mb-8">
           <div className="text-xl font-bold text-blue-500">
             第 {currentQ + 1} / 20 题
@@ -169,17 +156,14 @@ export default function QuizPage() {
           </div>
         </div>
 
-        {/* 倒计时圆圈 */}
         <div className={`absolute -top-10 left-1/2 transform -translate-x-1/2 w-20 h-20 rounded-full flex items-center justify-center text-3xl font-black border-4 shadow-lg ${timeLeft <= 3 ? 'bg-red-500 border-red-200 text-white animate-bounce' : 'bg-white border-blue-500 text-blue-500'}`}>
           {timeLeft}
         </div>
 
-        {/* 题目 */}
         <div className="text-center my-10">
           <h2 className="text-5xl font-black text-gray-700">{currentQuestion.text}</h2>
         </div>
 
-        {/* 选项按钮 */}
         <div className="grid grid-cols-2 gap-4">
           {currentQuestion.options.map((opt: number, index: number) => (
             <button
@@ -193,5 +177,14 @@ export default function QuizPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// 【修改点2】真正导出的是这个“外壳”，它包裹了 Suspense
+export default function QuizPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-blue-300 flex items-center justify-center text-white text-2xl font-bold">加载中...</div>}>
+      <QuizContent />
+    </Suspense>
   );
 }
