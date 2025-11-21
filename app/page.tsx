@@ -83,7 +83,12 @@ export default function Home() {
               <Link href="/leaderboard" className="text-purple-500 font-bold text-sm hover:text-purple-700 flex items-center gap-1">
                 🏆 查看排行榜
               </Link>
-              <button onClick={logout} className="text-red-400 font-bold text-sm hover:text-red-600">退出登录</button>
+              <div className="flex gap-4">
+                <Link href="/admin/login" className="text-blue-500 font-bold text-sm hover:text-blue-700 flex items-center gap-1">
+                  ⚙️ 管理后台
+                </Link>
+                <button onClick={logout} className="text-red-400 font-bold text-sm hover:text-red-600">退出登录</button>
+              </div>
             </div>
           </div>
         )}

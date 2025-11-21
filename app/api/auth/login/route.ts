@@ -11,9 +11,9 @@ export async function POST(req: Request) {
     if (!user) return NextResponse.json({ message: '用户不存在' }, { status: 400 });
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return NextResponse.json({ message: '密码错误' }, { status: 400 });
-    return NextResponse.json({ 
+    return NextResponse.json({
       message: '登录成功',
-      user: { username: user.username, role: user.role, _id: user._id }
+      user: { username: user.username, role: user.role, _id: user._id.toString() }
     });
   } catch (error) {
     return NextResponse.json({ message: '服务器错误' }, { status: 500 });

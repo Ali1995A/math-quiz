@@ -24,8 +24,10 @@ export default function RegisterPage() {
       const data = await res.json();
 
       if (res.ok) {
+        // 注册成功后直接登录
+        localStorage.setItem('currentUser', JSON.stringify(data.user));
         alert('🎉 注册成功！欢迎加入数学大冒险！');
-        router.push('/'); // 注册成功后暂时跳回首页，后面改成跳登录页
+        router.push('/'); // 跳转到主页
       } else {
         alert('❌ ' + data.message);
       }

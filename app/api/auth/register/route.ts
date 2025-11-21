@@ -10,8 +10,11 @@ export async function POST(req: Request) {
     const existingUser = await User.findOne({ username });
     if (existingUser) return NextResponse.json({ message: '用户已存在' }, { status: 400 });
     const hashedPassword = await bcrypt.hash(password, 10);
-    await User.create({ username, password: hashedPassword });
-    return NextResponse.json({ message: '注册成功' }, { status: 201 });
+    const newUser = await User.create({ username, password: hashedPassword });
+    return NextResponse.json({
+      message: '注册成功',
+      user: { username: newUser.username, role: newUser.role, _id: newUser._id }
+    }, { status: 201 });
   } catch (error) {
     return NextResponse.json({ message: '服务器错误' }, { status: 500 });
   }
